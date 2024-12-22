@@ -1,15 +1,13 @@
-"use client";
-
 import React, { useState, useEffect, useMemo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import "leaflet-routing-machine";
 import TreasurePopup from "./TreasurePopup";
 import HintPopup from "./HintPopup";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
-// Fix for default marker icon
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "/marker-icon-2x.png",
@@ -18,16 +16,22 @@ L.Icon.Default.mergeOptions({
 });
 
 const treasureIcon = new L.Icon({
-  // treasure
   iconUrl: "https://cdn-icons-png.flaticon.com/128/1355/1355982.png",
   iconSize: [40, 40],
   iconAnchor: [20, 40],
   popupAnchor: [0, -40],
 });
 
-const SHRINK_INTERVAL = 15 * 60 * 1000; // 15 minutes in milliseconds
-const SHRINK_AMOUNT = 50; // Shrink by 50 meters each time
-const CENTER: L.LatLngExpression = [10.762622, 106.660172]; // Ho Chi Minh City center
+const currentPositionIcon = new L.Icon({
+  iconUrl: "https://cdn-icons-png.flaticon.com/128/929/929426.png",
+  iconSize: [40, 40],
+  iconAnchor: [20, 40],
+  popupAnchor: [0, -40],
+});
+
+const CENTER: L.LatLngExpression = [10.762622, 106.660172];
+const SHRINK_INTERVAL = 15 * 60 * 1000;
+const SHRINK_AMOUNT = 50;
 
 interface Treasure {
   id: string;
@@ -133,13 +137,21 @@ function TreasureCircle({
   return null;
 }
 
-export default function Map() {
+export default function Map({
+  onNavigate,
+}: {
+  onNavigate: (treasure: Treasure) => void;
+}) {
   const [selectedTreasure, setSelectedTreasure] = useState<Treasure | null>(
     null
   );
   const [showHint, setShowHint] = useState(false);
   const [timeLeft, setTimeLeft] = useState(SHRINK_INTERVAL / 1000);
   const { toast } = useToast();
+  const [currentPosition, setCurrentPosition] =
+    useState<L.LatLngExpression | null>(null);
+  const [routingControl, setRoutingControl] =
+    useState<L.Routing.Control | null>(null);
 
   const treasures = useMemo(() => initialTreasures, []);
 
@@ -159,6 +171,47 @@ export default function Map() {
 
     return () => clearInterval(timer);
   }, [toast]);
+
+  const handleGetLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setCurrentPosition([
+            position.coords.latitude,
+            position.coords.longitude,
+          ]);
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+        }
+      );
+    } else {
+      console.error("Geolocation is not supported by this browser.");
+    }
+  };
+
+  const handleNavigate = (treasure: Treasure) => {
+    if (!currentPosition) {
+      alert("Vui lòng bật vị trí của bạn.");
+      return;
+    }
+
+    if (routingControl) {
+      routingControl.setWaypoints([
+        L.latLng(currentPosition),
+        L.latLng(treasure.position),
+      ]);
+    } else {
+      const control = L.Routing.control({
+        waypoints: [L.latLng(currentPosition), L.latLng(treasure.position)],
+        routeWhileDragging: true,
+      }).addTo(map);
+
+      setRoutingControl(control);
+    }
+
+    setShowPopup(false);
+  };
 
   return (
     <div className="flex-1 relative">
@@ -186,6 +239,11 @@ export default function Map() {
             <TreasureCircle treasure={treasure} shrinkAmount={SHRINK_AMOUNT} />
           </React.Fragment>
         ))}
+        {currentPosition && (
+          <Marker position={currentPosition} icon={currentPositionIcon}>
+            <Popup>Vị trí hiện tại của bạn</Popup>
+          </Marker>
+        )}
       </MapContainer>
       {selectedTreasure && (
         <TreasurePopup
@@ -195,8 +253,10 @@ export default function Map() {
           onClose={() => setSelectedTreasure(null)}
         />
       )}
+      {showHint && <HintPopup onClose={() => setShowHint(false)} />}
       <div className="absolute top-4 right-4 z-[1000] flex flex-col space-y-2">
         <Button onClick={() => setShowHint(true)}>Nhận gợi ý</Button>
+        <Button onClick={handleGetLocation}>Lấy vị trí hiện tại</Button>
       </div>
       <div className="absolute bottom-4 left-4 right-4 z-[1000] bg-white p-2 rounded-md shadow-md md:left-auto md:right-4 md:max-w-xs">
         <p className="text-sm font-medium">
@@ -210,7 +270,6 @@ export default function Map() {
           </p>
         )}
       </div>
-      {showHint && <HintPopup onClose={() => setShowHint(false)} />}
     </div>
   );
 }
