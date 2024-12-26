@@ -8,7 +8,11 @@ import HintPopup from "./HintPopup";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+interface IconDefaultPrototype extends L.Icon.Default {
+  _getIconUrl?: string;
+}
+
+delete (L.Icon.Default.prototype as IconDefaultPrototype)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "/marker-icon-2x.png",
   iconUrl: "/marker-icon.png",
@@ -137,11 +141,7 @@ function TreasureCircle({
   return null;
 }
 
-export default function Map({
-  onNavigate,
-}: {
-  onNavigate: (treasure: Treasure) => void;
-}) {
+export default function Map() {
   const [selectedTreasure, setSelectedTreasure] = useState<Treasure | null>(
     null
   );
@@ -150,8 +150,6 @@ export default function Map({
   const { toast } = useToast();
   const [currentPosition, setCurrentPosition] =
     useState<L.LatLngExpression | null>(null);
-  const [routingControl, setRoutingControl] =
-    useState<L.Routing.Control | null>(null);
 
   const treasures = useMemo(() => initialTreasures, []);
 
@@ -190,29 +188,6 @@ export default function Map({
     }
   };
 
-  const handleNavigate = (treasure: Treasure) => {
-    if (!currentPosition) {
-      alert("Vui lòng bật vị trí của bạn.");
-      return;
-    }
-
-    if (routingControl) {
-      routingControl.setWaypoints([
-        L.latLng(currentPosition),
-        L.latLng(treasure.position),
-      ]);
-    } else {
-      const control = L.Routing.control({
-        waypoints: [L.latLng(currentPosition), L.latLng(treasure.position)],
-        routeWhileDragging: true,
-      }).addTo(map);
-
-      setRoutingControl(control);
-    }
-
-    setShowPopup(false);
-  };
-
   return (
     <div className="flex-1 relative">
       <MapContainer
@@ -247,7 +222,6 @@ export default function Map({
       </MapContainer>
       {selectedTreasure && (
         <TreasurePopup
-          treasureId={selectedTreasure.id}
           treasureName={selectedTreasure.name}
           radius={selectedTreasure.radius}
           onClose={() => setSelectedTreasure(null)}
