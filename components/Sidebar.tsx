@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { User, GemIcon as Treasure } from "lucide-react"; // Remove HelpCircle
+import { User, GemIcon as Treasure } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-// Remove Button import since it's not used
 import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
@@ -42,21 +41,17 @@ interface XuResponse {
   goiY: string[];
 }
 
-export default function Sidebar({ isOpen, onClose }: SidebarProps) {
+export default function Sidebar({ isOpen, onClose, onNavigate }: SidebarProps) {
   const [treasuresData, setTreasuresData] = useState<Treasure[]>([]);
 
   const handleGetLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setCurrentPosition([
-            position.coords.latitude,
-            position.coords.longitude,
-          ]);
-          console.log("Current position:", [
-            position.coords.latitude,
-            position.coords.longitude,
-          ]);
+          // Use onNavigate to handle navigation when getting location
+          onNavigate({
+            position: [position.coords.latitude, position.coords.longitude],
+          });
         },
         (error) => {
           console.error("Error getting location:", error);
