@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
 interface IconDefaultPrototype extends L.Icon.Default {
-  _getIconUrl?: string;
+  _getIconUrl?: () => string;
 }
 
 delete (L.Icon.Default.prototype as IconDefaultPrototype)._getIconUrl;
@@ -103,6 +103,7 @@ function TreasureCircle({
 }
 
 export default function Map() {
+  const [treasures, setTreasures] = useState<Treasure[]>([]);
   const [selectedTreasure, setSelectedTreasure] = useState<Treasure | null>(
     null
   );
@@ -123,8 +124,9 @@ export default function Map() {
         const transformedData: Treasure[] = data.map((xu) => ({
           id: xu._id,
           name: xu.tenXu,
-          position: [xu.toaDo.kinhDo, xu.toaDo.viDo], // Corrected order
+          position: [xu.toaDo.kinhDo, xu.toaDo.viDo],
           radius: 5,
+          trangThai: xu.trangThai,
         }));
 
         setTreasures(transformedData);
@@ -135,6 +137,34 @@ export default function Map() {
 
     fetchTreasures();
   }, []);
+
+  const handleSave = async (tenXu: string, maXu: string): Promise<string> => {
+    try {
+      const userId = JSON.parse(localStorage.getItem("user") || "{}")._id;
+      const response = await fetch("http://localhost:4000/api/xu/verify", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          tenXu,
+          maXu,
+          userId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        return "Chúc mừng! Bạn đã tìm thấy kho báu!";
+      } else {
+        return data.message || "Có lỗi xảy ra";
+      }
+    } catch (error) {
+      console.error("Error saving treasure:", error);
+      return "Có lỗi xảy ra khi xác thực kho báu";
+    }
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -203,6 +233,7 @@ export default function Map() {
       </MapContainer>
       {selectedTreasure && (
         <TreasurePopup
+          treasureId={selectedTreasure.id} // Add this line
           treasureName={selectedTreasure.name}
           radius={selectedTreasure.radius}
           hints={[

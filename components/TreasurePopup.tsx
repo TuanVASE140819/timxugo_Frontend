@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 interface TreasurePopupProps {
-  treasureId: string;
+  treasureId: string; // This is the required prop
   treasureName: string;
   radius: number;
   hints: Hint[];
