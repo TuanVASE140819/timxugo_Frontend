@@ -43,7 +43,7 @@ export default function TreasurePopup({
     try {
       const userId = JSON.parse(localStorage.getItem("user") || "{}")["_id"];
       const response = await fetch(
-        `http://localhost:4000/api/xu/${treasureId}/hints?userId=${userId}&hintIndex=${hintIndex}`,
+        `https://timxugo-backend.vercel.app/api/xu/${treasureId}/hints?userId=${userId}&hintIndex=${hintIndex}`,
         {
           method: "GET",
         }
