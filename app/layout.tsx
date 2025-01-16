@@ -1,6 +1,7 @@
 import "./globals.css";
 import { Roboto_Slab, Pirata_One } from "next/font/google";
 import { ClientWrapper } from "@/components/ClientWrapper";
+import { UserProvider } from "@/components/UserContext";
 
 const robotoSlab = Roboto_Slab({ subsets: ["latin"] });
 const pirataOne = Pirata_One({ weight: "400", subsets: ["latin"] });
@@ -18,9 +19,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={robotoSlab.className}>
-        <ClientWrapper pirataFont={pirataOne.style.fontFamily}>
-          {children}
-        </ClientWrapper>
+        <UserProvider>
+          <ClientWrapper pirataFont={pirataOne.style.fontFamily}>
+            {children}
+          </ClientWrapper>
+        </UserProvider>
       </body>
     </html>
   );

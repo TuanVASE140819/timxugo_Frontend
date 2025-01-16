@@ -5,6 +5,7 @@ import L from "leaflet";
 import "leaflet-routing-machine";
 import TreasurePopup from "./TreasurePopup";
 import HintPopup from "./HintPopup";
+import InputPopup from "./InputPopup";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
@@ -16,7 +17,8 @@ L.Icon.Default.mergeOptions({
 });
 
 const treasureIcon = new L.Icon({
-  iconUrl: "https://cdn-icons-png.flaticon.com/128/1355/1355982.png",
+  iconUrl:
+    "https://cdn-icons-png.freepik.com/256/15286/15286694.png?semt=ais_hybrid",
   iconSize: [40, 40],
   iconAnchor: [20, 40],
   popupAnchor: [0, -40],
@@ -38,70 +40,29 @@ interface Treasure {
   name: string;
   position: L.LatLngExpression;
   radius: number;
+  trangThai: string;
+  foundBy?: {
+    userId: string;
+    foundAt: string;
+  };
 }
 
-const initialTreasures: Treasure[] = [
-  {
-    id: "1",
-    name: "Kho báu Bến Thành",
-    position: [10.772, 106.698],
-    radius: 300,
-  },
-  {
-    id: "2",
-    name: "Kho báu Nhà Thờ Đức Bà",
-    position: [10.78, 106.699],
-    radius: 250,
-  },
-  {
-    id: "3",
-    name: "Kho báu Bảo tàng Chứng tích Chiến tranh",
-    position: [10.779, 106.692],
-    radius: 200,
-  },
-  {
-    id: "4",
-    name: "Kho báu Công viên Tao Đàn",
-    position: [10.774, 106.692],
-    radius: 350,
-  },
-  {
-    id: "5",
-    name: "Kho báu Chợ Bình Tây",
-    position: [10.751, 106.648],
-    radius: 280,
-  },
-  {
-    id: "6",
-    name: "Kho báu Bảo tàng Mỹ thuật",
-    position: [10.769, 106.702],
-    radius: 220,
-  },
-  {
-    id: "7",
-    name: "Kho báu Dinh Độc Lập",
-    position: [10.777, 106.695],
-    radius: 270,
-  },
-  {
-    id: "8",
-    name: "Kho báu Công viên Lê Văn Tám",
-    position: [10.787, 106.7],
-    radius: 320,
-  },
-  {
-    id: "9",
-    name: "Kho báu Nhà hát Thành phố",
-    position: [10.776, 106.703],
-    radius: 230,
-  },
-  {
-    id: "10",
-    name: "Kho báu Bưu điện Trung tâm",
-    position: [10.779, 106.7],
-    radius: 260,
-  },
-];
+interface XuResponse {
+  toaDo: {
+    kinhDo: number;
+    viDo: number;
+  };
+  _id: string;
+  tenXu: string;
+  moTa: string;
+  giaTri: number;
+  maXu: string;
+  banKinh: number;
+  thoiGianTao: string;
+  isActive: boolean;
+  trangThai: string;
+  goiY: string[];
+}
 
 function TreasureCircle({
   treasure,
@@ -146,14 +107,37 @@ export default function Map({
     null
   );
   const [showHint, setShowHint] = useState(false);
+  const [showInputPopup, setShowInputPopup] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
   const [timeLeft, setTimeLeft] = useState(SHRINK_INTERVAL / 1000);
   const { toast } = useToast();
   const [currentPosition, setCurrentPosition] =
     useState<L.LatLngExpression | null>(null);
   const [routingControl, setRoutingControl] =
     useState<L.Routing.Control | null>(null);
+  const [treasures, setTreasures] = useState<Treasure[]>([]);
 
-  const treasures = useMemo(() => initialTreasures, []);
+  useEffect(() => {
+    const fetchTreasures = async () => {
+      try {
+        const response = await fetch("http://localhost:4000/api/xu");
+        const data: XuResponse[] = await response.json();
+
+        const transformedData: Treasure[] = data.map((xu) => ({
+          id: xu._id,
+          name: xu.tenXu,
+          position: [xu.toaDo.kinhDo, xu.toaDo.viDo], // Corrected order
+          radius: 5,
+        }));
+
+        setTreasures(transformedData);
+      } catch (error) {
+        console.error("Error fetching treasures:", error);
+      }
+    };
+
+    fetchTreasures();
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -213,6 +197,36 @@ export default function Map({
     setShowPopup(false);
   };
 
+  const handleSave = async (tenXu: string, maXu: string): Promise<string> => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const userId = user._id;
+
+      const response = await fetch("http://localhost:4000/api/xu/find", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          accept: "application/json",
+        },
+        body: JSON.stringify({ tenXu, maXu, userId }),
+      });
+
+      if (response.status === 404) {
+        return "Mã kho báu không hợp lệ"; // Mã kho báu không hợp lệ
+      }
+
+      if (!response.ok) {
+        throw new Error("Failed to save treasure");
+      }
+
+      const data = await response.json();
+      console.log("Treasure saved:", data);
+      return "Chúc mừng bạn đã tìm được lì xì, bạn hãy liên hệ admin nhận tiền"; // Mã kho báu hợp lệ
+    } catch (error) {
+      console.error("Error saving treasure:", error);
+      return "Mã kho báu không hợp lệ"; // Mã kho báu không hợp lệ
+    }
+  };
   return (
     <div className="flex-1 relative">
       <MapContainer
@@ -227,15 +241,13 @@ export default function Map({
               position={treasure.position}
               icon={treasureIcon}
               eventHandlers={{
-                click: () => setSelectedTreasure(treasure),
+                click: () => {
+                  setSelectedTreasure(treasure);
+                  setShowPopup(true);
+                },
               }}
-            >
-              <Popup>
-                <strong>{treasure.name}</strong>
-                <br />
-                Bạn đã tìm thấy kho báu!
-              </Popup>
-            </Marker>
+            />
+
             <TreasureCircle treasure={treasure} shrinkAmount={SHRINK_AMOUNT} />
           </React.Fragment>
         ))}
@@ -250,13 +262,26 @@ export default function Map({
           treasureId={selectedTreasure.id}
           treasureName={selectedTreasure.name}
           radius={selectedTreasure.radius}
-          onClose={() => setSelectedTreasure(null)}
+          hints={[
+            { noiDung: "Gợi ý 1", _id: "0" },
+            { noiDung: "Gợi ý 2", _id: "1" },
+            { noiDung: "Gợi ý 3", _id: "2" },
+          ]}
+          isOpen={showPopup}
+          onClose={() => setShowPopup(false)}
         />
       )}
       {showHint && <HintPopup onClose={() => setShowHint(false)} />}
+      {showInputPopup && (
+        <InputPopup
+          onClose={() => setShowInputPopup(false)}
+          onSave={handleSave}
+        />
+      )}
       <div className="absolute top-4 right-4 z-[1000] flex flex-col space-y-2">
         <Button onClick={() => setShowHint(true)}>Nhận gợi ý</Button>
         <Button onClick={handleGetLocation}>Lấy vị trí hiện tại</Button>
+        <Button onClick={() => setShowInputPopup(true)}>Nhập thông tin</Button>
       </div>
       <div className="absolute bottom-4 left-4 right-4 z-[1000] bg-white p-2 rounded-md shadow-md md:left-auto md:right-4 md:max-w-xs">
         <p className="text-sm font-medium">

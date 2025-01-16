@@ -10,13 +10,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -32,37 +25,25 @@ interface Treasure {
   radius: number;
 }
 
-const treasures: Treasure[] = [
-  {
-    id: "1",
-    name: "Kho báu 1",
-    position: [10.772, 106.698],
-    found: true,
-    radius: 300,
-  },
-  {
-    id: "2",
-    name: "Kho báu 2",
-    position: [10.78, 106.699],
-    found: false,
-    radius: 250,
-  },
-  {
-    id: "3",
-    name: "Kho báu 3",
-    position: [10.779, 106.692],
-    found: false,
-    radius: 200,
-  },
-  // Thêm các kho báu khác
-];
+interface XuResponse {
+  toaDo: {
+    kinhDo: number;
+    viDo: number;
+  };
+  _id: string;
+  tenXu: string;
+  moTa: string;
+  giaTri: number;
+  maXu: string;
+  banKinh: number;
+  thoiGianTao: string;
+  isActive: boolean;
+  trangThai: string;
+  goiY: string[];
+}
 
-export default function Sidebar({ isOpen, onClose, onNavigate }: SidebarProps) {
-  const [currentPosition, setCurrentPosition] = useState<
-    [number, number] | null
-  >(null);
-  const [showPopup, setShowPopup] = useState(false);
-  const [nearestTreasures, setNearestTreasures] = useState<Treasure[]>([]);
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
+  const [treasuresData, setTreasuresData] = useState<Treasure[]>([]);
 
   const handleGetLocation = () => {
     if (navigator.geolocation) {
@@ -86,47 +67,34 @@ export default function Sidebar({ isOpen, onClose, onNavigate }: SidebarProps) {
     }
   };
 
-  const calculateDistance = (
-    pos1: [number, number],
-    pos2: [number, number]
-  ) => {
-    const R = 6371; // Radius of the Earth in km
-    const dLat = ((pos2[0] - pos1[0]) * Math.PI) / 180;
-    const dLon = ((pos2[1] - pos1[1]) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((pos1[0] * Math.PI) / 180) *
-        Math.cos((pos2[0] * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c; // Distance in km
-    return distance;
-  };
+  const fetchTreasures = () => {
+    try {
+      const xuWallet = JSON.parse(localStorage.getItem("xuWallet") || "{}");
+      const treasures = xuWallet.foundXu || [];
 
-  const findNearestTreasures = () => {
-    console.log("Current position in findNearestTreasures:", currentPosition);
-    if (!currentPosition) {
-      alert("Vui lòng bật vị trí của bạn.");
-      return;
+      const transformedData: Treasure[] = treasures.map((xu: XuResponse) => ({
+        id: xu._id,
+        name: xu.tenXu,
+        position: [xu.toaDo.viDo, xu.toaDo.kinhDo],
+        found: xu.trangThai !== "chua_tim_thay",
+        radius: xu.banKinh,
+      }));
+
+      setTreasuresData(transformedData);
+    } catch (error) {
+      console.error("Error fetching treasures:", error);
     }
-
-    const sortedTreasures = treasures
-      .map((treasure) => ({
-        ...treasure,
-        distance: calculateDistance(currentPosition, treasure.position),
-      }))
-      .sort((a, b) => a.distance - b.distance)
-      .slice(0, 3);
-
-    setNearestTreasures(sortedTreasures);
-    setShowPopup(true);
   };
 
+  const userInfo = localStorage.getItem("user");
+  const wallet = localStorage.getItem("xuWallet");
+
+  console.log("wallet:", wallet);
   useEffect(() => {
-    console.log("Calling handleGetLocation");
     handleGetLocation();
+    fetchTreasures();
   }, []);
+
   const content = (
     <>
       <Card className="bg-primary/5 border-none">
@@ -135,36 +103,63 @@ export default function Sidebar({ isOpen, onClose, onNavigate }: SidebarProps) {
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
               <User className="w-6 h-6 text-primary" />
             </div>
-            <span>John Doe</span>
+            <span>
+              {userInfo ? JSON.parse(userInfo).name : "Chưa đăng nhập"}
+            </span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium">Coins</span>
-                <Badge variant="secondary">1000/5000</Badge>
+            <div className="p-4 bg-white rounded-lg shadow-md">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700">
+                  Điểm thưởng:
+                </span>
+                <span className="text-lg font-semibold text-primary">
+                  {userInfo ? JSON.parse(userInfo).rewardPoints : 0}
+                </span>
               </div>
-              <Progress value={20} className="h-2" />
+              <Progress
+                value={
+                  ((userInfo ? JSON.parse(userInfo).rewardPoints : 0) / 5000) *
+                  100
+                }
+                className="h-2"
+              />
             </div>
-            <div className="flex items-center space-x-2 text-sm">
-              <HelpCircle className="w-4 h-4 text-primary" />
-              <span>3 gợi ý còn lại</span>
+            <div className="p-4 bg-white rounded-lg shadow-md">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700">
+                  Xu đã nhận:
+                </span>
+                <span className="text-lg font-semibold text-primary">
+                  {wallet ? JSON.parse(wallet).totalValue : 0}
+                </span>
+              </div>
+              <Progress
+                value={wallet ? JSON.parse(wallet).totalValue : 0}
+                max={100}
+                className="h-2"
+              />
             </div>
           </div>
         </CardContent>
+        {/* rewardPoints */}
       </Card>
       <div className="mt-6">
-        <h3 className="font-bold mb-2 text-lg">Danh sách kho báu</h3>
+        <h3 className="font-bold mb-2 text-lg">
+          Danh sách kho báu đã tìm thấy
+        </h3>
         <ul className="space-y-2">
-          <TreasureItem name="Kho báu 1" found={true} />
-          <TreasureItem name="Kho báu 2" found={false} />
-          <TreasureItem name="Kho báu 3" found={false} />
+          {treasuresData.map((treasure) => (
+            <TreasureItem
+              key={treasure.id}
+              name={treasure.name}
+              found={treasure.found}
+            />
+          ))}
         </ul>
       </div>
-      <Button onClick={findNearestTreasures} className="mt-4">
-        Kho báu gần nhất
-      </Button>
     </>
   );
 
@@ -184,27 +179,6 @@ export default function Sidebar({ isOpen, onClose, onNavigate }: SidebarProps) {
           {content}
         </SheetContent>
       </Sheet>
-      <Dialog open={showPopup} onOpenChange={setShowPopup}>
-        <DialogContent className="sm:max-w-[425px] z-[1100]">
-          <DialogHeader>
-            <DialogTitle>Kho báu gần bạn nhất</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {nearestTreasures.map((treasure) => (
-              <div
-                key={treasure.id}
-                className="flex justify-between items-center"
-              >
-                <span>{treasure.name}</span>
-                <Button onClick={() => onNavigate(treasure)}>Chỉ đường</Button>
-              </div>
-            ))}
-          </div>
-          <DialogFooter>
-            <Button onClick={() => setShowPopup(false)}>Đóng</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
