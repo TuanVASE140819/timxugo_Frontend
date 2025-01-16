@@ -53,7 +53,7 @@ interface Wallet {
   foundXu: XuResponse[];
 }
 
-export default function Sidebar({ isOpen, onClose }: SidebarProps) {
+export default function Sidebar({ isOpen, onClose, onNavigate }: SidebarProps) {
   const [treasuresData, setTreasuresData] = useState<Treasure[]>([]);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [wallet, setWallet] = useState<Wallet | null>(null);
@@ -62,10 +62,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          console.log("Current position:", [
-            position.coords.latitude,
-            position.coords.longitude,
-          ]);
+          // Use onNavigate to handle navigation when getting location
+          onNavigate({
+            id: "current-location", // Provide a unique id
+            name: "Current Location", // Provide a name
+            position: [position.coords.latitude, position.coords.longitude],
+            found: false, // Provide a default value
+            radius: 0, // Provide a default value
+          });
         },
         (error) => {
           console.error("Error getting location:", error);
