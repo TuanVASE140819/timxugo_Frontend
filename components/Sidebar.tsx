@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { User, HelpCircle, GemIcon as Treasure } from "lucide-react";
+import { User, GemIcon as Treasure } from "lucide-react"; // Remove HelpCircle
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+// Remove Button import since it's not used
 import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
