@@ -9,7 +9,11 @@ import InputPopup from "./InputPopup";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+interface IconDefaultPrototype extends L.Icon.Default {
+  _getIconUrl?: string;
+}
+
+delete (L.Icon.Default.prototype as IconDefaultPrototype)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "/marker-icon-2x.png",
   iconUrl: "/marker-icon.png",
@@ -98,11 +102,7 @@ function TreasureCircle({
   return null;
 }
 
-export default function Map({
-  onNavigate,
-}: {
-  onNavigate: (treasure: Treasure) => void;
-}) {
+export default function Map() {
   const [selectedTreasure, setSelectedTreasure] = useState<Treasure | null>(
     null
   );
@@ -113,9 +113,6 @@ export default function Map({
   const { toast } = useToast();
   const [currentPosition, setCurrentPosition] =
     useState<L.LatLngExpression | null>(null);
-  const [routingControl, setRoutingControl] =
-    useState<L.Routing.Control | null>(null);
-  const [treasures, setTreasures] = useState<Treasure[]>([]);
 
   useEffect(() => {
     const fetchTreasures = async () => {
@@ -174,59 +171,6 @@ export default function Map({
     }
   };
 
-  const handleNavigate = (treasure: Treasure) => {
-    if (!currentPosition) {
-      alert("Vui lòng bật vị trí của bạn.");
-      return;
-    }
-
-    if (routingControl) {
-      routingControl.setWaypoints([
-        L.latLng(currentPosition),
-        L.latLng(treasure.position),
-      ]);
-    } else {
-      const control = L.Routing.control({
-        waypoints: [L.latLng(currentPosition), L.latLng(treasure.position)],
-        routeWhileDragging: true,
-      }).addTo(map);
-
-      setRoutingControl(control);
-    }
-
-    setShowPopup(false);
-  };
-
-  const handleSave = async (tenXu: string, maXu: string): Promise<string> => {
-    try {
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-      const userId = user._id;
-
-      const response = await fetch("http://localhost:4000/api/xu/find", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          accept: "application/json",
-        },
-        body: JSON.stringify({ tenXu, maXu, userId }),
-      });
-
-      if (response.status === 404) {
-        return "Mã kho báu không hợp lệ"; // Mã kho báu không hợp lệ
-      }
-
-      if (!response.ok) {
-        throw new Error("Failed to save treasure");
-      }
-
-      const data = await response.json();
-      console.log("Treasure saved:", data);
-      return "Chúc mừng bạn đã tìm được lì xì, bạn hãy liên hệ admin nhận tiền"; // Mã kho báu hợp lệ
-    } catch (error) {
-      console.error("Error saving treasure:", error);
-      return "Mã kho báu không hợp lệ"; // Mã kho báu không hợp lệ
-    }
-  };
   return (
     <div className="flex-1 relative">
       <MapContainer
@@ -259,7 +203,6 @@ export default function Map({
       </MapContainer>
       {selectedTreasure && (
         <TreasurePopup
-          treasureId={selectedTreasure.id}
           treasureName={selectedTreasure.name}
           radius={selectedTreasure.radius}
           hints={[
