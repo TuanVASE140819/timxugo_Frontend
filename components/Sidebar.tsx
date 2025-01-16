@@ -43,6 +43,16 @@ interface XuResponse {
   goiY: string[];
 }
 
+interface UserInfo {
+  name: string;
+  rewardPoints: number;
+}
+
+interface Wallet {
+  totalValue: number;
+  foundXu: XuResponse[];
+}
+
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [treasuresData, setTreasuresData] = useState<Treasure[]>([]);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
@@ -52,10 +62,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setCurrentPosition([
-            position.coords.latitude,
-            position.coords.longitude,
-          ]);
           console.log("Current position:", [
             position.coords.latitude,
             position.coords.longitude,
