@@ -1,8 +1,10 @@
+"use client";
+
 import { useState, useEffect } from "react";
-import { User, HelpCircle, GemIcon as Treasure } from "lucide-react";
+import { User, GemIcon as Treasure } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+
 import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
@@ -42,17 +44,25 @@ interface XuResponse {
   goiY: string[];
 }
 
+interface UserInfo {
+  name: string;
+  rewardPoints: number;
+}
+
+interface Wallet {
+  totalValue: number;
+  foundXu: XuResponse[];
+}
+
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [treasuresData, setTreasuresData] = useState<Treasure[]>([]);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [wallet, setWallet] = useState<Wallet | null>(null);
 
   const handleGetLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setCurrentPosition([
-            position.coords.latitude,
-            position.coords.longitude,
-          ]);
           console.log("Current position:", [
             position.coords.latitude,
             position.coords.longitude,
@@ -86,11 +96,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     }
   };
 
-  const userInfo = localStorage.getItem("user");
-  const wallet = localStorage.getItem("xuWallet");
-
-  console.log("wallet:", wallet);
   useEffect(() => {
+    // Access localStorage only after component mounts
+    setUserInfo(JSON.parse(localStorage.getItem("user") || "null"));
+    setWallet(JSON.parse(localStorage.getItem("xuWallet") || "null"));
     handleGetLocation();
     fetchTreasures();
   }, []);
@@ -103,9 +112,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
               <User className="w-6 h-6 text-primary" />
             </div>
-            <span>
-              {userInfo ? JSON.parse(userInfo).name : "Chưa đăng nhập"}
-            </span>
+            <span>{userInfo ? userInfo.name : "Chưa đăng nhập"}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -116,14 +123,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   Điểm thưởng:
                 </span>
                 <span className="text-lg font-semibold text-primary">
-                  {userInfo ? JSON.parse(userInfo).rewardPoints : 0}
+                  {userInfo ? userInfo.rewardPoints : 0}
                 </span>
               </div>
               <Progress
-                value={
-                  ((userInfo ? JSON.parse(userInfo).rewardPoints : 0) / 5000) *
-                  100
-                }
+                value={((userInfo ? userInfo.rewardPoints : 0) / 5000) * 100}
                 className="h-2"
               />
             </div>
@@ -133,11 +137,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   Xu đã nhận:
                 </span>
                 <span className="text-lg font-semibold text-primary">
-                  {wallet ? JSON.parse(wallet).totalValue : 0}
+                  {wallet ? wallet.totalValue : 0}
                 </span>
               </div>
               <Progress
-                value={wallet ? JSON.parse(wallet).totalValue : 0}
+                value={wallet ? wallet.totalValue : 0}
                 max={100}
                 className="h-2"
               />
