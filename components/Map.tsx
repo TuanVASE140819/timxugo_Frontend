@@ -118,7 +118,9 @@ export default function Map() {
   useEffect(() => {
     const fetchTreasures = async () => {
       try {
-        const response = await fetch("http://localhost:4000/api/xu");
+        const response = await fetch(
+          "https://timxugo-backend.vercel.app/api/xu"
+        );
         const data: XuResponse[] = await response.json();
 
         const transformedData: Treasure[] = data.map((xu) => ({
@@ -141,17 +143,20 @@ export default function Map() {
   const handleSave = async (tenXu: string, maXu: string): Promise<string> => {
     try {
       const userId = JSON.parse(localStorage.getItem("user") || "{}")._id;
-      const response = await fetch("http://localhost:4000/api/xu/verify", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          tenXu,
-          maXu,
-          userId,
-        }),
-      });
+      const response = await fetch(
+        "https://timxugo-backend.vercel.app/api/xu/verify",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            tenXu,
+            maXu,
+            userId,
+          }),
+        }
+      );
 
       const data = await response.json();
 

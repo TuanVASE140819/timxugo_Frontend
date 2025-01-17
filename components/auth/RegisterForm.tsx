@@ -33,19 +33,22 @@ export default function RegisterForm() {
     }
 
     try {
-      const response = await fetch("http://localhost:4000/api/auth/register", {
-        method: "POST",
-        headers: {
-          accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-          role: "user", // Thêm trường role
-        }),
-      });
+      const response = await fetch(
+        "https://timxugo-backend.vercel.app/api/auth/register",
+        {
+          method: "POST",
+          headers: {
+            accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            password,
+            role: "user", // Thêm trường role
+          }),
+        }
+      );
 
       if (response.ok) {
         toast({
