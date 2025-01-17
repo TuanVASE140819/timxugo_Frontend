@@ -34,7 +34,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
             className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent"
             style={{ fontFamily: "var(--font-pirata)" }}
           >
-            Treasure Hunt
+            Đi Tìm Lỳ Xỳ May Mắn
           </span>
         </div>
         <nav className="hidden md:block">

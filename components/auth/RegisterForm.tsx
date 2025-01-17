@@ -34,7 +34,7 @@ export default function RegisterForm() {
 
     try {
       const response = await fetch(
-        "https://timxugo-backend.vercel.app/api/auth/register",
+        "https://timxugo-backend-2.vercel.app/api/auth/register",
         {
           method: "POST",
           headers: {

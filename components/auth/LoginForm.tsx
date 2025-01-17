@@ -25,7 +25,7 @@ export default function LoginForm() {
 
     try {
       const response = await fetch(
-        "https://timxugo-backend.vercel.app/api/auth/login",
+        "https://timxugo-backend-2.vercel.app/api/auth/login",
         {
           method: "POST",
           headers: {

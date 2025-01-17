@@ -7,7 +7,7 @@ const robotoSlab = Roboto_Slab({ subsets: ["latin"] });
 const pirataOne = Pirata_One({ weight: "400", subsets: ["latin"] });
 
 export const metadata = {
-  title: "Treasure Hunt Game",
+  title: "Đi Tìm Lỳ Xỳ May Mắn Game",
   description: "Find hidden treasures on the map!",
 };
 

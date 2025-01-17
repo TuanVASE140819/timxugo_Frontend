@@ -41,7 +41,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
 
       console.log(`Fetching user info for ID: ${user.id}`);
       const response = await fetch(
-        `https://timxugo-backend.vercel.app/api/users/${user.id}`
+        `https://timxugo-backend-2.vercel.app/api/users/${user.id}`
       );
       const data = await response.json();
       console.log("User info:", data);

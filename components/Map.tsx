@@ -119,7 +119,7 @@ export default function Map() {
     const fetchTreasures = async () => {
       try {
         const response = await fetch(
-          "https://timxugo-backend.vercel.app/api/xu"
+          "https://timxugo-backend-2.vercel.app/api/xu"
         );
         const data: XuResponse[] = await response.json();
 
@@ -144,7 +144,7 @@ export default function Map() {
     try {
       const userId = JSON.parse(localStorage.getItem("user") || "{}")._id;
       const response = await fetch(
-        "https://timxugo-backend.vercel.app/api/xu/verify",
+        "https://timxugo-backend-2.vercel.app/api/xu/verify",
         {
           method: "POST",
           headers: {
