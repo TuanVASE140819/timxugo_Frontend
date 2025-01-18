@@ -144,7 +144,7 @@ export default function Map() {
     try {
       const userId = JSON.parse(localStorage.getItem("user") || "{}")._id;
       const response = await fetch(
-        "https://timxugo-backend-2.vercel.app/api/xu/verify",
+        "https://timxugo-backend-2.vercel.app/api/xu/find",
         {
           method: "POST",
           headers: {
